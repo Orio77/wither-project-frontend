@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { fetchPdfDocuments, uploadPdf } from "@/app/api/witherApi";
+import { fetchPdfDocuments, uploadPdf } from "@/app/api/witherPdfApi";
 import { PdfList } from "../pdf/PdfList";
 import { PdfUploadForm } from "../pdf/PdfUploadForm";
+import { PdfProcessForm } from "../pdf/PdfProcessForm";
 import { ErrorAlert } from "../ErrorAlert";
-import { PDFDocument } from "@/types/pdf";
+import { FileEntity } from "@/types/pdf.types";
 
 export function PdfWitherWorkspace() {
-	const [pdfs, setPdfs] = useState<PDFDocument[]>([]);
+	const [pdfs, setPdfs] = useState<FileEntity[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [successMessage, setSuccessMessage] = useState("");
@@ -33,14 +34,14 @@ export function PdfWitherWorkspace() {
 		}
 	};
 
-	const handleUpload = async (file: File, name: string) => {
+	const handleUpload = async (file: File) => {
 		setIsLoading(true);
 		setError("");
 
 		try {
-			const result = await uploadPdf(file, name);
+			const result = await uploadPdf(file);
 			if (result === false) {
-				setError(`A file with name "${name}" already exists`);
+				setError(`A file with name "${file.name}" already exists`);
 				setShowError(true);
 				return;
 			}
@@ -61,34 +62,38 @@ export function PdfWitherWorkspace() {
 	};
 
 	return (
-		<Card className="mb-8">
-			<CardHeader>
-				<CardTitle>PDF Wither Workspace</CardTitle>
-			</CardHeader>
-			<CardContent>
-				{pdfs.length === 0 ? (
-					<Alert variant="default">Upload your first PDF</Alert>
-				) : (
-					<>
-						{error && showError && (
-							<ErrorAlert
-								message={error}
-								onDismiss={() => setShowError(false)}
-							/>
-						)}
-						{successMessage && (
-							<Alert
-								variant="default"
-								className="mb-4 bg-green-100 border-green-600 text-green-600"
-							>
-								{successMessage}
-							</Alert>
-						)}
-						<PdfList pdfs={pdfs} />
-					</>
-				)}
-				<PdfUploadForm onUpload={handleUpload} isLoading={isLoading} />
-			</CardContent>
-		</Card>
+		<div className="space-y-8">
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-center">Upload PDF</CardTitle>
+				</CardHeader>
+				<CardContent>
+					{pdfs.length === 0 ? (
+						<Alert variant="default">Upload your first PDF</Alert>
+					) : (
+						<>
+							{error && showError && (
+								<ErrorAlert
+									message={error}
+									onDismiss={() => setShowError(false)}
+								/>
+							)}
+							{successMessage && (
+								<Alert
+									variant="default"
+									className="mb-4 bg-green-100 border-green-600 text-green-600"
+								>
+									{successMessage}
+								</Alert>
+							)}
+							<PdfList pdfs={pdfs} />
+						</>
+					)}
+					<PdfUploadForm onUpload={handleUpload} isLoading={isLoading} />
+				</CardContent>
+			</Card>
+
+			{pdfs.length > 0 && <PdfProcessForm pdfs={pdfs} />}
+		</div>
 	);
 }

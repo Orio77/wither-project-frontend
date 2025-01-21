@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { DataItem } from "@/app/types/api";
-import { fetchQueryData } from "@/app/api/witherApi";
+import { fetchQueryData } from "@/app/api/witherPdfApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
