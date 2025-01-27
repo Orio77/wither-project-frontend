@@ -1,64 +1,74 @@
-import { Chapter } from "@/types/pdf.types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Chapter, Document, Page } from "@/types/pdf.types";
+import { ViewState } from "@/types/ui.types";
+import { Card, CardContent } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/CollapsibleCard";
+import { ChapterCard } from "./ChapterCard";
+import { PageCard } from "./PageCard";
 
 interface DocumentStructureProps {
-	chapters: Chapter[] | undefined;
+	document: Document;
+	selectedChapter: Chapter | null;
+	viewState: ViewState;
+	onChapterClick: (chapter: Chapter) => void;
+	onPageClick: (page: Page) => void;
 }
 
-export function DocumentStructure({ chapters }: DocumentStructureProps) {
-	console.log("Received chapters:", chapters);
-
-	if (!chapters || chapters.length === 0) {
+export function DocumentStructure({
+	document,
+	selectedChapter,
+	viewState,
+	onChapterClick,
+	onPageClick,
+}: DocumentStructureProps) {
+	if (!document) {
 		return (
 			<Card>
 				<CardContent className="p-4">
-					<p className="text-gray-500 text-center">
-						No chapters available for this document
-					</p>
+					<p className="text-gray-500 text-center">No document available</p>
 				</CardContent>
 			</Card>
 		);
 	}
 
+	if (viewState === ViewState.CHAPTER && selectedChapter) {
+		return (
+			<div className="space-y-4">
+				<CollapsibleCard title={selectedChapter.title}>
+					{selectedChapter.summary && (
+						<div className="prose max-w-none">
+							<p className="text-gray-700">{selectedChapter.summary.content}</p>
+						</div>
+					)}
+				</CollapsibleCard>
+
+				<div className="space-y-2">
+					{selectedChapter.pages.map((page) => (
+						<PageCard key={page.id} page={page} onClick={onPageClick} />
+					))}
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="space-y-4">
-			{chapters.map((chapter) => (
-				<Card key={chapter.id}>
-					<CardHeader>
-						<CardTitle>
-							Chapter {chapter.chapterNumber}: {chapter.title}
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						{chapter.summary && (
-							<div className="mb-4">
-								<h4 className="font-semibold text-sm text-gray-600">
-									Chapter Summary
-								</h4>
-								<p className="text-gray-700">{chapter.summary.content}</p>
-							</div>
-						)}
+			<CollapsibleCard title={document.title}>
+				{document.summary && (
+					<div className="prose max-w-none">
+						<p className="text-gray-700">{document.summary.content}</p>
+					</div>
+				)}
+			</CollapsibleCard>
 
-						<div className="mt-4 space-y-2">
-							{chapter.pages.map((page) => (
-								<Card key={page.id} className="bg-gray-50">
-									<CardContent className="p-4">
-										<h5 className="font-semibold mb-2">
-											Page {page.pageNumber}
-										</h5>
-										{page.content && <p> {page.content} </p>}
-										{page.summary && (
-											<p className="text-sm text-gray-600">
-												{page.summary.content}
-											</p>
-										)}
-									</CardContent>
-								</Card>
-							))}
-						</div>
-					</CardContent>
-				</Card>
-			))}
+			<div className="space-y-2">
+				{document.chapters?.map((chapter) => (
+					<ChapterCard
+						key={chapter.id}
+						chapter={chapter}
+						onClick={onChapterClick}
+					/>
+				))}
+			</div>
 		</div>
 	);
 }
