@@ -64,3 +64,8 @@ export interface FileEntity {
 	contentType: string;
 	data: Uint8Array;
 }
+
+export interface ProgressUpdate {
+	currentPage: number;
+	totalPages: number;
+}
