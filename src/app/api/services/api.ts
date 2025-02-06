@@ -48,4 +48,9 @@ export const pdfApi = {
 
 	getAllDocs: () =>
 		axiosInstance.get<Document[]>(getFullPath(API_PATHS.PDF_GET_DOC_ALL)),
+
+	delete: (name: string) =>
+		axiosInstance.delete(getFullPath(API_PATHS.PDF_DELETE_DOC), {
+			params: { name },
+		}),
 };

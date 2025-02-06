@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
-import { processPdf } from "@/app/api/witherPdfApi";
+import { deletePdf, processPdf } from "@/app/api/witherPdfApi";
 import { PdfList } from "./PdfList";
 import { FileEntity, ProgressUpdate } from "@/types/pdf.types";
 import { Progress } from "../ui/progress";
@@ -65,6 +65,17 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 		}
 	};
 
+	const handleDelete = async (pdf: FileEntity) => {
+		console.log("Deleting PDF:", pdf.name);
+		try {
+			await deletePdf(pdf.name);
+			setProcessSuccess(true); // Reuse success alert
+		} catch (err) {
+			console.error("Delete error:", err);
+			setError(err instanceof Error ? err.message : "Failed to delete PDF");
+		}
+	};
+
 	const progressPercentage = progress
 		? Math.floor((progress.current / progress.total) * 100)
 		: 0;
@@ -85,11 +96,14 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 			<CardContent>
 				<PdfList
 					pdfs={pdfs}
-					actionButton={{
-						label: "Process",
-						onClick: handleProcess,
-						loadingId: processingId,
-					}}
+					actionButtons={[
+						{
+							label: "Process",
+							onClick: handleProcess,
+							loadingId: processingId,
+						},
+					]}
+					onDelete={handleDelete}
 				/>
 
 				{progress && (

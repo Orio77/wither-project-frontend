@@ -99,14 +99,10 @@ export async function getPdf(name: string): Promise<FileEntity> {
 export async function fetchPdfDocument(name: string): Promise<Document> {
 	try {
 		const response = await pdfApi.getDoc(name);
-		console.log("API Response:", response.data); // Add this line
-
-		// { title: string; author: string; chapters: Chapter[]; id: number; content: string; summary: BookSummary; fileName: string; type: PDFType; }'
-
+		console.log("API Response:", response.data);
 		return response.data;
 	} catch (error) {
 		console.error("Detailed error:", {
-			// Add this block
 			error,
 			response: axios.isAxiosError(error) ? error.response?.data : null,
 			status: axios.isAxiosError(error) ? error.response?.status : null,
@@ -142,6 +138,19 @@ export async function checkPdfProcessed(name: string): Promise<boolean> {
 		}
 		throw new Error(
 			`Failed to check PDF status: ${
+				error instanceof Error ? error.message : String(error)
+			}`
+		);
+	}
+}
+
+export async function deletePdf(name: string): Promise<boolean> {
+	try {
+		const response = await pdfApi.delete(name);
+		return response.status === 200;
+	} catch (error) {
+		throw new Error(
+			`Failed to delete PDF: ${
 				error instanceof Error ? error.message : String(error)
 			}`
 		);

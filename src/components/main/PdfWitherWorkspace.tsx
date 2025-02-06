@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { fetchPdfDocuments, uploadPdf } from "@/app/api/witherPdfApi";
-import { PdfList } from "../pdf/PdfList";
 import { PdfUploadForm } from "../pdf/PdfUploadForm";
 import { PdfProcessForm } from "../pdf/PdfProcessForm";
 import { ErrorAlert } from "../ErrorAlert";
@@ -86,7 +85,6 @@ export function PdfWitherWorkspace() {
 									{successMessage}
 								</Alert>
 							)}
-							<PdfList pdfs={pdfs} />
 						</>
 					)}
 					<PdfUploadForm onUpload={handleUpload} isLoading={isLoading} />
