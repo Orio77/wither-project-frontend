@@ -122,7 +122,7 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 				{processSuccess && (
 					<Alert
 						variant="default"
-						className="mt-4 bg-green-100 border-green-600 text-green-600"
+						className="mt-4 bg-green-100 dark:bg-green-900/30 border-green-600 dark:border-green-400 text-green-600 dark:text-green-400"
 						onClick={() => setProcessSuccess(false)}
 						role="button"
 					>

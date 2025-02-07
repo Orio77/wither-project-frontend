@@ -111,7 +111,9 @@ export function PdfList({ pdfs, actionButtons, onDelete }: PdfListProps) {
 							<Card
 								key={pdf.id}
 								className={`transform transition-transform duration-200 hover:scale-[1.02] ${
-									processedStatus[pdf.id] ? "bg-green-50" : ""
+									processedStatus[pdf.id]
+										? "bg-green-100 dark:bg-green-900/30"
+										: ""
 								}`}
 							>
 								<CardContent className="flex justify-between items-center py-4">
@@ -123,7 +125,7 @@ export function PdfList({ pdfs, actionButtons, onDelete }: PdfListProps) {
 										<Button
 											variant="outline"
 											onClick={() => handleDetailsClick(pdf.name)}
-											className="ml-auto text-green-600 hover:text-green-700 hover:bg-green-50"
+											className="ml-auto text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30"
 										>
 											Go to PDF Details
 										</Button>
