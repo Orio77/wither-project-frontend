@@ -12,9 +12,12 @@ import {
 
 interface PdfProcessFormProps {
 	pdfs: FileEntity[];
+	onPdfUpdate?: (pdfs: FileEntity[]) => void;
 }
 
-export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
+export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
+	const [localPdfs, setLocalPdfs] = useState<FileEntity[]>(pdfs);
+	const [refreshKey, setRefreshKey] = useState(0);
 	const [processingId, setProcessingId] = useState<number | null>(null);
 	const [processSuccess, setProcessSuccess] = useState(false);
 	const [error, setError] = useState("");
@@ -22,6 +25,10 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 		current: number;
 		total: number;
 	} | null>(null);
+
+	useEffect(() => {
+		setLocalPdfs(pdfs);
+	}, [pdfs]);
 
 	useEffect(() => {
 		console.log("Setting up WebSocket connection...");
@@ -47,6 +54,12 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 		});
 	};
 
+	const refresh = () => {
+		setProgress(null);
+		setProcessSuccess(false);
+		setRefreshKey((prevKey) => prevKey + 1);
+	};
+
 	const handleProcess = async (pdf: FileEntity) => {
 		console.log("Starting process for PDF:", pdf.name);
 		setProcessingId(pdf.id);
@@ -56,6 +69,7 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 			console.log("Process result:", result);
 			if (result) {
 				setProcessSuccess(true);
+				setLocalPdfs([...localPdfs]);
 			}
 		} catch (err) {
 			console.error("Process error:", err);
@@ -69,6 +83,9 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 		console.log("Deleting PDF:", pdf.name);
 		try {
 			await deletePdf(pdf.name);
+			const updatedPdfs = localPdfs.filter((p) => p.id !== pdf.id);
+			setLocalPdfs(updatedPdfs);
+			onPdfUpdate?.(updatedPdfs);
 			setProcessSuccess(true); // Reuse success alert
 		} catch (err) {
 			console.error("Delete error:", err);
@@ -95,7 +112,8 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 			</CardHeader>
 			<CardContent>
 				<PdfList
-					pdfs={pdfs}
+					key={refreshKey}
+					pdfs={localPdfs}
 					actionButtons={[
 						{
 							label: "Process",
@@ -123,7 +141,7 @@ export function PdfProcessForm({ pdfs }: PdfProcessFormProps) {
 					<Alert
 						variant="default"
 						className="mt-4 bg-green-100 dark:bg-green-900/30 border-green-600 dark:border-green-400 text-green-600 dark:text-green-400"
-						onClick={() => setProcessSuccess(false)}
+						onClick={refresh}
 						role="button"
 					>
 						PDF processed successfully! Click to dismiss.

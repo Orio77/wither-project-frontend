@@ -24,7 +24,7 @@ export function PdfUploadForm({ onUpload, isLoading }: PdfUploadFormProps) {
 	};
 
 	return (
-		<div className="mt-6 flex gap-2">
+		<div className="mt-1 flex gap-2">
 			<Input
 				type="text"
 				value={uploadName}

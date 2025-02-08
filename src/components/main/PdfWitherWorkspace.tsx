@@ -45,7 +45,8 @@ export function PdfWitherWorkspace() {
 				return;
 			}
 
-			await fetchPdfData();
+			const updatedPdfs = await fetchPdfDocuments();
+			setPdfs(updatedPdfs);
 			setSuccessMessage("PDF uploaded successfully!");
 			setTimeout(() => setSuccessMessage(""), 500);
 		} catch (err) {
@@ -91,7 +92,7 @@ export function PdfWitherWorkspace() {
 				</CardContent>
 			</Card>
 
-			{pdfs.length > 0 && <PdfProcessForm pdfs={pdfs} />}
+			{pdfs.length > 0 && <PdfProcessForm pdfs={pdfs} onPdfUpdate={setPdfs} />}
 		</div>
 	);
 }
