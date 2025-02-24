@@ -42,10 +42,7 @@ export function PdfUploadForm({ onUpload, isLoading }: PdfUploadFormProps) {
 				}}
 				className="flex-1 hover:bg-gray-200"
 			/>
-			<Button
-				onClick={handleSubmit}
-				disabled={isLoading || !uploadFile || !uploadName.trim()}
-			>
+			<Button onClick={handleSubmit} disabled={isLoading || !uploadFile}>
 				Upload
 			</Button>
 		</div>

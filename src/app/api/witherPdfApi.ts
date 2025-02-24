@@ -52,10 +52,11 @@ export async function fetchPdfDocuments(): Promise<FileEntity[]> {
 	}
 }
 
-export async function uploadPdf(file: File): Promise<boolean> {
+export async function uploadPdf(file: File, name: string): Promise<boolean> {
 	try {
 		const formData = new FormData();
 		formData.append("pdf", file);
+		formData.append("name", name);
 
 		const response = await pdfApi.upload(formData);
 

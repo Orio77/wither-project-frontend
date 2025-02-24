@@ -60,6 +60,7 @@ export interface Document {
 
 export interface FileEntity {
 	id: number;
+	fileName: string;
 	name: string;
 	contentType: string;
 	data: Uint8Array;

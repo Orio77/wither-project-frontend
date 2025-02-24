@@ -33,12 +33,12 @@ export function PdfWitherWorkspace() {
 		}
 	};
 
-	const handleUpload = async (file: File) => {
+	const handleUpload = async (file: File, name: string) => {
 		setIsLoading(true);
 		setError("");
 
 		try {
-			const result = await uploadPdf(file);
+			const result = await uploadPdf(file, name);
 			if (result === false) {
 				setError(`A file with name "${file.name}" already exists`);
 				setShowError(true);
