@@ -3,7 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { deletePdf, processPdf } from "@/app/api/witherPdfApi";
 import { PdfList } from "./PdfList";
-import { FileEntity, ProgressUpdate } from "@/types/pdf.types";
+import {
+	FileEntity,
+	ProgressUpdate,
+	SummaryProgressDTO,
+} from "@/types/pdf.types";
 import { Progress } from "../ui/progress";
 import {
 	connectWebSocket,
@@ -21,10 +25,7 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 	const [processingId, setProcessingId] = useState<number | null>(null);
 	const [processSuccess, setProcessSuccess] = useState(false);
 	const [error, setError] = useState("");
-	const [progress, setProgress] = useState<{
-		current: number;
-		total: number;
-	} | null>(null);
+	const [progress, setProgress] = useState<number | null>(null);
 
 	useEffect(() => {
 		setLocalPdfs(pdfs);
@@ -42,16 +43,27 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 		};
 	}, []);
 
-	const handleProgressUpdate = (progressUpdate: ProgressUpdate) => {
+	const handleProgressUpdate = (
+		progressUpdate: SummaryProgressDTO | ProgressUpdate
+	) => {
 		console.log("Received progress update:", progressUpdate);
-		setProgress({
-			current: progressUpdate.currentPage,
-			total: progressUpdate.totalPages,
-		});
-		console.log("Updated progress state:", {
-			current: progressUpdate.currentPage,
-			total: progressUpdate.totalPages,
-		});
+		// Handle both old and new progress format
+		if ("progress" in progressUpdate) {
+			// New format using SummaryProgressDTO
+			const progressValue = progressUpdate.progress * 100;
+			setProgress(progressValue);
+			console.log("Updated progress percentage:", progressValue);
+		} else if (
+			"currentPage" in progressUpdate &&
+			"totalPages" in progressUpdate
+		) {
+			// Old format compatibility
+			const progressValue = Math.floor(
+				(progressUpdate.currentPage / progressUpdate.totalPages) * 100
+			);
+			setProgress(progressValue);
+			console.log("Updated progress percentage (legacy):", progressValue);
+		}
 	};
 
 	const refresh = () => {
@@ -64,6 +76,7 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 		console.log("Starting process for PDF:", pdf.name);
 		setProcessingId(pdf.id);
 		setError("");
+		setProgress(0); // Reset progress when starting a new process
 		try {
 			const result = await processPdf(pdf.name);
 			console.log("Process result:", result);
@@ -93,16 +106,12 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 		}
 	};
 
-	const progressPercentage = progress
-		? Math.floor((progress.current / progress.total) * 100)
-		: 0;
-
+	// Log for debugging
 	console.log("Render state:", {
 		processingId,
 		processSuccess,
 		error,
 		progress,
-		progressPercentage,
 	});
 
 	return (
@@ -124,10 +133,13 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 					onDelete={handleDelete}
 				/>
 
-				{progress && (
-					<div className="mt-4">
-						<Progress value={progressPercentage} />
-						<span>{`${progress.current} / ${progress.total} pages processed`}</span>
+				{progress !== null && (
+					<div className="mt-6 space-y-2">
+						<div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+							<span>Processing</span>
+							<span>{Math.round(progress)}%</span>
+						</div>
+						<Progress value={progress} className="h-2 transition-all" />
 					</div>
 				)}
 

@@ -70,3 +70,7 @@ export interface ProgressUpdate {
 	currentPage: number;
 	totalPages: number;
 }
+
+export interface SummaryProgressDTO {
+  progress: number;  // A value between 0 and 1 representing progress percentage
+}
