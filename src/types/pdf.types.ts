@@ -51,6 +51,7 @@ export interface Document {
 	id: number;
 	content: string;
 	summary: BookSummary;
+	summaryCompletionPercentage?: number;
 	fileName: string;
 	type: PDFType;
 	title: string;
@@ -72,5 +73,5 @@ export interface ProgressUpdate {
 }
 
 export interface SummaryProgressDTO {
-  progress: number;  // A value between 0 and 1 representing progress percentage
+	progress: number; // A value between 0 and 1 representing progress percentage
 }

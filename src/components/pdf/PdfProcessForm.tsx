@@ -8,7 +8,6 @@ import {
 	ProgressUpdate,
 	SummaryProgressDTO,
 } from "@/types/pdf.types";
-import { Progress } from "../ui/progress";
 import {
 	connectWebSocket,
 	disconnectWebSocket,
@@ -128,20 +127,12 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 							label: "Process",
 							onClick: handleProcess,
 							loadingId: processingId,
+							progress: progress,
 						},
 					]}
 					onDelete={handleDelete}
+					onContinueProcessing={handleProcess}
 				/>
-
-				{progress !== null && (
-					<div className="mt-6 space-y-2">
-						<div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-							<span>Processing</span>
-							<span>{Math.round(progress)}%</span>
-						</div>
-						<Progress value={progress} className="h-2 transition-all" />
-					</div>
-				)}
 
 				{error && (
 					<Alert variant="destructive" className="mt-4">

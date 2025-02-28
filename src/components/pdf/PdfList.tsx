@@ -1,27 +1,10 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { FileEntity } from "@/types/pdf.types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { checkPdfProcessed } from "@/app/api/witherPdfApi";
 import { useRouter } from "next/navigation";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "../ui/alert-dialog";
+import { SearchBox } from "./SearchBox";
+import { PdfItem } from "./PdfItem";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 interface PdfListProps {
 	pdfs: FileEntity[];
@@ -31,161 +14,135 @@ interface PdfListProps {
 		loading?: boolean;
 		loadingId?: number | null;
 		disabled?: boolean;
+		progress?: number | null;
 	}>;
 	onDelete?: (pdf: FileEntity) => void;
+	onContinueProcessing?: (pdf: FileEntity) => void;
 }
 
 interface ProcessingStatus {
 	[key: number]: boolean;
 }
 
-export function PdfList({ pdfs, actionButtons, onDelete }: PdfListProps) {
+export function PdfList({
+	pdfs,
+	actionButtons,
+	onDelete,
+	onContinueProcessing,
+}: PdfListProps) {
 	const router = useRouter();
 	const [searchTerm, setSearchTerm] = useState("");
-	const [filteredPdfs, setFilteredPdfs] = useState<FileEntity[]>([]);
 	const [processedStatus, setProcessedStatus] = useState<ProcessingStatus>({});
 	const [pdfToDelete, setPdfToDelete] = useState<FileEntity | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		const results = pdfs.filter((pdf) =>
-			pdf?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-		);
-		setFilteredPdfs(results);
+	// Memoize filtered PDFs to prevent unnecessary re-renders
+	const filteredPdfs = useMemo(() => {
+		const term = searchTerm.toLowerCase().trim();
+		// Only return filtered results if there is a search term
+		if (term === "") {
+			return []; // Return empty array when no search term
+		}
+		return pdfs.filter((pdf) => pdf?.name?.toLowerCase().includes(term));
 	}, [searchTerm, pdfs]);
 
+	// Use useCallback for event handlers to prevent unnecessary re-renders
+	const handleDetailsClick = useCallback(
+		(pdfName: string) => {
+			router.push(`/pdf/${encodeURIComponent(pdfName)}`);
+		},
+		[router]
+	);
+
+	const handleDeleteConfirm = useCallback(() => {
+		if (pdfToDelete && onDelete) {
+			onDelete(pdfToDelete);
+			setPdfToDelete(null);
+		}
+	}, [pdfToDelete, onDelete]);
+
+	// Check processing status for all PDFs
 	useEffect(() => {
+		let isMounted = true;
 		const checkProcessingStatus = async () => {
+			setIsLoading(true);
 			const statuses: ProcessingStatus = {};
-			for (const pdf of pdfs) {
-				try {
-					statuses[pdf.id] = await checkPdfProcessed(pdf.name);
-				} catch (error) {
-					console.error(`Error checking status for ${pdf.name}:`, error);
-					statuses[pdf.id] = false;
+
+			try {
+				await Promise.all(
+					pdfs.map(async (pdf) => {
+						try {
+							if (isMounted) {
+								statuses[pdf.id] = await checkPdfProcessed(pdf.name);
+							}
+						} catch (error) {
+							console.error(`Error checking status for ${pdf.name}:`, error);
+							if (isMounted) {
+								statuses[pdf.id] = false;
+							}
+						}
+					})
+				);
+
+				if (isMounted) {
+					setProcessedStatus(statuses);
+					setIsLoading(false);
+				}
+			} catch (error) {
+				console.error("Error checking processing statuses:", error);
+				if (isMounted) {
+					setIsLoading(false);
 				}
 			}
-			setProcessedStatus(statuses);
 		};
 
 		checkProcessingStatus();
+
+		return () => {
+			isMounted = false;
+		};
 	}, [pdfs]);
 
-	const handleDetailsClick = (pdfName: string) => {
-		router.push(`/pdf/${encodeURIComponent(pdfName)}`);
-	};
-
-	const renderContextMenu = (pdf: FileEntity) => (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="icon">
-					<MoreVertical className="h-4 w-4" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent>
-				<DropdownMenuItem
-					className="text-red-600"
-					onClick={() => setPdfToDelete(pdf)}
-				>
-					Delete
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
-
 	return (
-		<div>
-			<Input
-				type="text"
-				value={searchTerm}
-				onChange={(e) => setSearchTerm(e.target.value)}
-				placeholder="Search PDFs..."
-				className="mb-4"
-			/>
+		<div className="space-y-4">
+			<SearchBox value={searchTerm} onChange={setSearchTerm} />
 
-			{searchTerm.trim() !== "" && (
+			{isLoading ? (
+				<div className="text-center py-8">
+					<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+					<p className="mt-2 text-gray-500">Loading PDFs...</p>
+				</div>
+			) : (
 				<div className="space-y-2">
-					{filteredPdfs.length === 0 ? (
-						<div className="text-center text-gray-500">No PDFs found</div>
+					{searchTerm.trim() === "" ? (
+						<div className="text-center text-gray-500 py-8">
+							Start typing to search PDFs
+						</div>
+					) : filteredPdfs.length === 0 ? (
+						<div className="text-center text-gray-500 py-8">
+							No PDFs found matching &quot;{searchTerm}&quot;
+						</div>
 					) : (
 						filteredPdfs.map((pdf) => (
-							<Card
+							<PdfItem
 								key={pdf.id}
-								className={`transform transition-transform duration-200 hover:scale-[1.02] ${
-									processedStatus[pdf.id]
-										? "bg-green-100 dark:bg-green-900/30"
-										: ""
-								}`}
-							>
-								<CardContent className="flex justify-between items-center py-4">
-									<div>
-										<div>{pdf.name}</div>
-									</div>
-
-									{processedStatus[pdf.id] ? (
-										<Button
-											variant="outline"
-											onClick={() => handleDetailsClick(pdf.name)}
-											className="ml-auto text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30"
-										>
-											Go to PDF Details
-										</Button>
-									) : (
-										actionButtons && (
-											<div className="flex ml-auto gap-2">
-												{actionButtons.map((action, index) => (
-													<Button
-														key={index}
-														onClick={() => action.onClick(pdf)}
-														disabled={
-															action.disabled || action.loadingId === pdf.id
-														}
-													>
-														{action.loadingId === pdf.id
-															? "Processing..."
-															: action.label}
-													</Button>
-												))}
-											</div>
-										)
-									)}
-									{renderContextMenu(pdf)}
-								</CardContent>
-							</Card>
+								pdf={pdf}
+								isProcessed={processedStatus[pdf.id]}
+								onDetailsClick={handleDetailsClick}
+								onDelete={setPdfToDelete}
+								onContinueProcessing={onContinueProcessing}
+								actionButtons={actionButtons}
+							/>
 						))
 					)}
 				</div>
 			)}
 
-			<AlertDialog
-				open={!!pdfToDelete}
-				onOpenChange={() => setPdfToDelete(null)}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle className="text-center">
-							Are you sure?
-						</AlertDialogTitle>
-						<AlertDialogDescription className="text-center">
-							This will permanently delete &quot;{pdfToDelete?.name}&quot;. This
-							action cannot be undone.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction
-							className="bg-red-600 hover:bg-red-700"
-							onClick={() => {
-								if (pdfToDelete && onDelete) {
-									onDelete(pdfToDelete);
-									setPdfToDelete(null);
-								}
-							}}
-						>
-							Delete
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+			<DeleteConfirmDialog
+				pdf={pdfToDelete}
+				onConfirm={handleDeleteConfirm}
+				onOpenChange={(open) => !open && setPdfToDelete(null)}
+			/>
 		</div>
 	);
 }
