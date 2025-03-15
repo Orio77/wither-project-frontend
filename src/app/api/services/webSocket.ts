@@ -24,7 +24,7 @@ export const connectWebSocket = (
 
 	stompClient.onConnect = () => {
 		console.log("Successfully connected to WebSocket");
-		stompClient?.subscribe("/topic/progress", (message) => {
+		stompClient?.subscribe("/topic/progress/summary", (message) => {
 			console.log("Received message:", message.body);
 			try {
 				const progress: ProgressUpdate = JSON.parse(message.body);
