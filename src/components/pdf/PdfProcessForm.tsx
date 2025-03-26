@@ -11,6 +11,7 @@ import {
 import {
 	connectWebSocket,
 	disconnectWebSocket,
+	subscribeToProgressUpdates,
 } from "@/app/api/services/webSocket";
 
 interface PdfProcessFormProps {
@@ -32,12 +33,16 @@ export function PdfProcessForm({ pdfs, onPdfUpdate }: PdfProcessFormProps) {
 
 	useEffect(() => {
 		console.log("Setting up WebSocket connection...");
-		connectWebSocket(handleProgressUpdate, (message) => {
-			console.log("WebSocket connection message:", message);
-		});
+
+		// Connect to the WebSocket
+		connectWebSocket();
+
+		// Subscribe to progress updates
+		const unsubscribe = subscribeToProgressUpdates(handleProgressUpdate);
 
 		return () => {
 			console.log("Cleaning up WebSocket connection...");
+			unsubscribe(); // Unsubscribe from progress updates
 			disconnectWebSocket();
 		};
 	}, []);

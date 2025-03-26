@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_PATHS, getFullPath } from "../../constants/apiPaths";
 import { Document, FileEntity } from "../../../types/pdf.types";
+import { QAModel, ScrapeItemReviewResult } from "../../../types/wither.types";
 
 const axiosInstance = axios.create({
 	baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",
@@ -15,10 +16,9 @@ export const dataGatherApi = {
 };
 
 export const queryApi = {
-	query: (question: string, numResults: number) =>
-		axiosInstance.post<Document[]>(getFullPath(API_PATHS.QUERY), {
-			question,
-			numResults,
+	query: (query: string) =>
+		axiosInstance.get<QAModel[]>(getFullPath(API_PATHS.QUERY), {
+			params: { query },
 		}),
 };
 
@@ -53,4 +53,15 @@ export const pdfApi = {
 		axiosInstance.delete(getFullPath(API_PATHS.PDF_DELETE_DOC), {
 			params: { name },
 		}),
+};
+
+export const scrapeReviewApi = {
+	submitReview: (reviewData: ScrapeItemReviewResult) =>
+		axiosInstance.post<void>(
+			getFullPath(API_PATHS.REVIEW_COMPLETE),
+			reviewData,
+			{
+				timeout: 10000, // Maintain the same timeout as the original code
+			}
+		),
 };

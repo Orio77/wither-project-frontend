@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Document, FileEntity } from "../../types/pdf.types";
 import { dataGatherApi, queryApi, pdfApi } from "./services/api";
+import { QAModel } from "@/types/wither.types";
 
 export async function fetchGatherData(query: string): Promise<Document[]> {
 	if (!query.trim()) {
@@ -19,16 +20,13 @@ export async function fetchGatherData(query: string): Promise<Document[]> {
 	}
 }
 
-export async function fetchQueryData(
-	question: string,
-	numResult: number = 5
-): Promise<Document[]> {
-	if (!question.trim()) {
-		throw new Error("Question cannot be empty");
+export async function fetchQueryData(query: string): Promise<QAModel[]> {
+	if (!query.trim()) {
+		throw new Error("Query cannot be empty");
 	}
 
 	try {
-		const response = await queryApi.query(question, numResult);
+		const response = await queryApi.query(query);
 		return response.data;
 	} catch (error) {
 		throw new Error(

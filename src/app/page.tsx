@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { RunWither } from "@/components/main/RunWither";
 import { QueryWither } from "@/components/main/QueryWither";
 import { PdfWitherWorkspace } from "@/components/main/PdfWitherWorkspace";
+import ScrapeItemReviewComponent from "@/components/wither/ScrapeItemReview";
 
 export default function Home() {
 	return (
@@ -20,6 +21,10 @@ export default function Home() {
 
 					<div className="glass-effect p-6 shadow-purple">
 						<PdfWitherWorkspace />
+					</div>
+
+					<div className="glass-effect p-6 shadow-purple">
+						<ScrapeItemReviewComponent />
 					</div>
 				</div>
 			</main>
